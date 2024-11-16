@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
+    public GameObject parent;
     public CinemachineCamera cinemachineCamera; // Reference to the Cinemachine Virtual Camera
     public CinemachinePositionComposer positionComposer;
     public Vector3 normalOffset = new Vector3(0, 2, -10); // Offset for normal gravity
@@ -22,10 +23,12 @@ public class CameraController : MonoBehaviour
     private void GravityChanged(bool flippedNormal)
     {
         // Set the new offset
-        Quaternion targetRotation = flippedNormal ? Quaternion.Euler(Vector3.forward * 180) : Quaternion.Euler(Vector3.zero);
+        Quaternion targetRotation = flippedNormal ? Quaternion.Euler(new Vector3(0,0,180)) : Quaternion.Euler(Vector3.zero);
         Vector3 targetOffset = flippedNormal ? flippedOffset : normalOffset;
 
         // Smoothly transition to the new offset
+        //positionComposer.TargetOffset = targetOffset;
+        //parent.transform.rotation = targetRotation;
         StartCoroutine(SmoothOffsetChange(targetRotation, targetOffset));
     }
     private IEnumerator SmoothOffsetChange(Quaternion targetRotation, Vector3 targetOffset)
@@ -36,9 +39,11 @@ public class CameraController : MonoBehaviour
         while (elapsedTime < transitionDuration)
         {
             elapsedTime += Time.deltaTime;
-            cinemachineCamera.transform.rotation = Quaternion.Lerp(cinemachineCamera.transform.rotation, targetRotation, elapsedTime / transitionDuration);
+            positionComposer.TargetOffset = Vector3.Lerp(positionComposer.TargetOffset,targetOffset,elapsedTime/transitionDuration);
+            //parent.transform.rotation = Quaternion.Lerp(parent.transform.rotation, targetRotation, elapsedTime / transitionDuration);
             yield return null;
         }
+        //parent.transform.rotation = targetRotation;
         //positionComposer.TargetOffset = targetOffset;
     }
 }

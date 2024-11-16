@@ -1,15 +1,11 @@
 using UnityEngine;
-
 public class PlayerController : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void OnEnable()
     {
-        
+        GravityController.OnGravityChange +=GravityChanged;
     }
-
-    // Update is called once per frame
-    void Update()
+    private void GravityChanged(bool flippedNormal)
     {
         
     }
