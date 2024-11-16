@@ -8,6 +8,7 @@ public class PlayerMovement : MonoBehaviour
     private Animator animator;
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
+    [SerializeField] private ParticleSystem dustParticle;
 
     private Vector2 velocity;
     private Vector2 playerPos;
@@ -39,7 +40,10 @@ public class PlayerMovement : MonoBehaviour
             animator.SetBool("isRunning", true);
 
         else
+        {
             animator.SetBool("isRunning", false);
+            dustParticle.Stop();
+        }
 
         // flip rotation
         if (moveInput > 0)
@@ -48,7 +52,11 @@ public class PlayerMovement : MonoBehaviour
             spriteRenderer.flipX = true;
 
         if(isGrounded)
+        {
             transform.Translate(new Vector3(moveInput * moveSpeed * Time.deltaTime, 0, 0));
+            if(!dustParticle.isPlaying)
+                dustParticle.Play();
+        }
         else
         {
             transform.Translate(new Vector3(moveInput * moveSpeed * Time.deltaTime, 0, 0));
