@@ -1,16 +1,22 @@
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Cinemachine;
+using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    public GameObject parent;
     public CinemachineCamera cinemachineCamera; // Reference to the Cinemachine Virtual Camera
     public CinemachinePositionComposer positionComposer;
+
     public Vector3 normalOffset = new Vector3(0, 2, -10); // Offset for normal gravity
     public Vector3 flippedOffset = new Vector3(0, -2, -10); // Offset for flipped gravity
     public float transitionDuration = 0.5f; // Duration of the smooth transition
+
+    [SerializeField] private float defaultLensSize = 5f;
+    [SerializeField] private float flippedLensSize = 2.5f;
+    [SerializeField] private Ease ease;
     private void Start()
     {
         positionComposer = cinemachineCamera.GetComponent<CinemachinePositionComposer>();
@@ -23,27 +29,31 @@ public class CameraController : MonoBehaviour
     private void GravityChanged(bool flippedNormal)
     {
         // Set the new offset
-        Quaternion targetRotation = flippedNormal ? Quaternion.Euler(new Vector3(0,0,180)) : Quaternion.Euler(Vector3.zero);
-        Vector3 targetOffset = flippedNormal ? flippedOffset : normalOffset;
-
-        // Smoothly transition to the new offset
-        //positionComposer.TargetOffset = targetOffset;
-        //parent.transform.rotation = targetRotation;
-        StartCoroutine(SmoothOffsetChange(targetRotation, targetOffset));
+        Vector3 targetRotation = flippedNormal ? Vector3.forward * 180 : Vector3.zero;
+        //positionComposer.TargetOffset = flippedOffset;
+        //StartCoroutine(SmoothLensSizeChange(flippedLensSize));
+        SmoothOffsetChange(targetRotation);
     }
-    private IEnumerator SmoothOffsetChange(Quaternion targetRotation, Vector3 targetOffset)
+    private IEnumerator SmoothLensSizeChange(float targetLensSize)
     {
-        Transform initialOffset = cinemachineCamera.Target.TrackingTarget;
-        // Ensure the offset is set to the final target
+        float animDuration =0.5f;
         float elapsedTime = 0;
-        while (elapsedTime < transitionDuration)
+        while (elapsedTime < animDuration)
         {
             elapsedTime += Time.deltaTime;
-            positionComposer.TargetOffset = Vector3.Lerp(positionComposer.TargetOffset,targetOffset,elapsedTime/transitionDuration);
-            //parent.transform.rotation = Quaternion.Lerp(parent.transform.rotation, targetRotation, elapsedTime / transitionDuration);
+            cinemachineCamera.Lens.OrthographicSize = Mathf.Lerp(cinemachineCamera.Lens.OrthographicSize, targetLensSize, elapsedTime / animDuration);
             yield return null;
         }
-        //parent.transform.rotation = targetRotation;
-        //positionComposer.TargetOffset = targetOffset;
+    }
+    private void SmoothOffsetChange(Vector3 targetRotation)
+    {
+        //Time.timeScale = 0.5f;
+        //Transform initialOffset = cinemachineCamera.Target.TrackingTarget;
+        // Ensure the offset is set to the final target
+        cinemachineCamera.transform.DORotate(targetRotation, transitionDuration).SetEase(ease).OnComplete(() =>
+        {
+            positionComposer.TargetOffset = normalOffset;
+            //StartCoroutine(SmoothLensSizeChange(defaultLensSize));
+        });
     }
 }
